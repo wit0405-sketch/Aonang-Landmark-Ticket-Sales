@@ -16,7 +16,7 @@ async function adminInit(){
  $('#refresh').onclick=loadDashboard;$('#filterDate').onchange=loadDashboard;
  $('#counterForm').onsubmit=async e=>{e.preventDefault();try{await api('/api/counters',{method:'POST',body:JSON.stringify(Object.fromEntries(new FormData(e.currentTarget)))});e.currentTarget.reset();showError($('#counterMsg'),'Counter created successfully.');loadCounters()}catch(x){showError($('#counterMsg'),x.message)}};
  $('#priceForm').onsubmit=async e=>{e.preventDefault();try{const p=Object.fromEntries(new FormData(e.currentTarget));Object.keys(p).forEach(k=>p[k]=Number(p[k]));await api('/api/settings',{method:'PUT',body:JSON.stringify(p)});showError($('#priceMsg'),'Prices saved.')}catch(x){showError($('#priceMsg'),x.message)}};
- $('#export').onclick=()=>{const rows=[['Created','Reference','Counter','Event date','Seats','Tickets','Payment','Revenue'],...lastRecent.map(x=>[x.created_at,x.id,x.counter_name,x.event_date,x.seats,x.ticket_count,x.payment_method,x.total_amount])];const csv=rows.map(r=>r.map(v=>'"'+String(v??'').replaceAll('"','""')+'"').join(',')).join('\\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\\ufeff'+csv],{type:'text/csv;charset=utf-8'}));a.download='aonang-ticket-sales.csv';a.click();URL.revokeObjectURL(a.href)};
+ $('#export').onclick=()=>{const rows=[['Created','Reference','Counter','Event date','Seats','Tickets','Payment','Revenue'],...lastRecent.map(x=>[x.created_at,x.id,x.counter_name,x.event_date,x.seats,x.ticket_count,x.payment_method,x.total_amount])];const csv=rows.map(r=>r.map(v=>'"'+String(v??'').replaceAll('"','""')+'"').join(',')).join('\r\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'}));a.download='aonang-ticket-sales.csv';a.click();URL.revokeObjectURL(a.href)};
  await Promise.all([loadDashboard(),loadCounters(),loadPrices()]);
  setInterval(()=>{if(!document.hidden)loadDashboard().catch(()=>{})},15000);
 }
@@ -27,7 +27,7 @@ async function loadPrices(){const d=await api('/api/settings');for(const k of ['
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 async function counterInit(){
  if(!authPage('counter'))return;$('#counterName').textContent=sessionStorage.getItem('als-name')||'Counter';$('#eventDate').value=dateNow();$('#eventDate').onchange=()=>{selected.clear();renderSummary();loadInventory()};$('#refreshSales').onclick=loadMySales;
- $('#completeSale').onclick=completeSale;await loadInventory();await loadMySales();
+ $('#completeSale').onclick=completeSale;await loadInventory();await loadMySales();setInterval(()=>{if(!document.hidden)loadInventory().catch(()=>{})},12000);
 }
 let inventory=null,selected=new Set();
 async function loadInventory(){try{inventory=await api('/api/inventory?date='+$('#eventDate').value);selected=new Set([...selected].filter(id=>!inventory.sold.includes(id)));renderSeats();renderSummary()}catch(e){showError($('#saleMsg'),e.message)}}
