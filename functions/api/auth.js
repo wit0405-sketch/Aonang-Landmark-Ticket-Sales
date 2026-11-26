@@ -12,7 +12,7 @@ export async function onRequestPost({request,env}){
   try{
     let account,role;
     if(username.toLowerCase()==='admin'){
-      if(!env.ADMIN_PASSWORD)return json({error:'ADMIN_PASSWORD secret is not configured'},503);
+      if(!env.ADMIN_PASSWORD||env.ADMIN_PASSWORD.length<14)return json({error:'Set ADMIN_PASSWORD to at least 14 characters in Cloudflare Pages secrets'},503);
       if(p.password!==env.ADMIN_PASSWORD)return json({error:'Invalid username or password'},401);
       const id='primary-admin';
       const exists=await env.DB.prepare('SELECT id FROM admins WHERE id=?').bind(id).first();
