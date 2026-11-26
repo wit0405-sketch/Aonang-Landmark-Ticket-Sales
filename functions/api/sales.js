@@ -11,7 +11,7 @@ export async function onRequestGet({request,env}){
     const recent=await env.DB.prepare(`SELECT s.*,GROUP_CONCAT(t.seat_id, ', ') seats FROM sales s LEFT JOIN tickets t ON t.sale_id=s.id WHERE 1=1 ${where} GROUP BY s.id ORDER BY s.created_at DESC LIMIT 150`).bind(...binds).all();
     return json({totals,byCounter:byCounter.results||[],recent:recent.results||[]});
   }
-  const recent=await env.DB.prepare(`SELECT s.*,GROUP_CONCAT(t.seat_id, ', ') seats FROM sales s LEFT JOIN tickets t ON t.sale_id=s.id WHERE s.counter_id=? ${date} GROUP BY s.id ORDER BY s.created_at DESC LIMIT 100`).bind(...(date?[s.account_id,date]:[s.account_id])).all();
+  const counterDateFilter=date?' AND s.event_date=?':'';\n  const recent=await env.DB.prepare(`SELECT s.*,GROUP_CONCAT(t.seat_id, ', ') seats FROM sales s LEFT JOIN tickets t ON t.sale_id=s.id WHERE s.counter_id=?${counterDateFilter} GROUP BY s.id ORDER BY s.created_at DESC LIMIT 100`).bind(...(date?[s.account_id,date]:[s.account_id])).all();
   return json({counter:s.display_name,recent:recent.results||[]});
 }
 export async function onRequestPost({request,env}){
