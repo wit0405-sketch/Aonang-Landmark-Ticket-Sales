@@ -3,7 +3,7 @@ export async function onRequestPost({request,env}){
   let p;try{p=await request.json()}catch{return json({error:'Invalid request'},400)}
   if(!env.DB)return json({error:'D1 binding DB is not configured'},503);
   if(p.action==='logout'){
-    const token=(request.headers.get('Authorization')||'').replace(/^Bearer\\s+/,'');
+    const token=(request.headers.get('Authorization')||'').replace(/^Bearer\s+/,'');
     if(token)await env.DB.prepare('DELETE FROM sessions WHERE token_hash=?').bind(await sha256(token)).run();
     return json({ok:true});
   }
@@ -24,7 +24,8 @@ export async function onRequestPost({request,env}){
       role='counter';
     }
     const session=await createSession(env.DB,role,account.id);
-    return json({ok:true,...session,role,username,displayName:role==='admin'?'Administrator':(await env.DB.prepare('SELECT company_name FROM counters WHERE id=?').bind(account.id).first()).company_name});
+    const displayName=role==='admin'?'Administrator':(await env.DB.prepare('SELECT company_name FROM counters WHERE id=?').bind(account.id).first()).company_name;
+    return json({ok:true,...session,role,username,displayName});
   }catch(e){return json({error:'Authentication service unavailable'},503)}
 }
 export async function onRequestGet({request,env}){
