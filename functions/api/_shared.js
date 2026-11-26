@@ -7,7 +7,7 @@ export const sha256 = async value => hex(await crypto.subtle.digest('SHA-256',ne
 export async function hashPassword(password,salt=uid()){
   const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(password),'PBKDF2',false,['deriveBits']);
   const bits=await crypto.subtle.deriveBits({name:'PBKDF2',salt:new TextEncoder().encode(salt),iterations:180000,hash:'SHA-256'},key,256);
-  return `${salt}:${hex(bits)}`;
+  return salt+':'+hex(bits);
 }
 export async function verifyPassword(password,stored){
   const [salt,expected]=String(stored||'').split(':');
@@ -22,24 +22,22 @@ export async function createSession(db,role,accountId){
   return {token,expiresAt:expires};
 }
 export async function getSession(request,db){
-  const token=(request.headers.get('Authorization')||'').replace(/^Bearer\\s+/,'');
+  const token=(request.headers.get('Authorization')||'').replace(/^Bearer\s+/,'');
   if(!token)return null;
-  const row=await db.prepare(`SELECT s.role,s.account_id,s.expires_at,
-      CASE WHEN s.role='admin' THEN a.username ELSE c.username END username,
-      CASE WHEN s.role='admin' THEN 'Administrator' ELSE c.company_name END display_name,
-      CASE WHEN s.role='counter' THEN c.active ELSE 1 END active
-    FROM sessions s
-    LEFT JOIN admins a ON s.role='admin' AND a.id=s.account_id
-    LEFT JOIN counters c ON s.role='counter' AND c.id=s.account_id
-    WHERE s.token_hash=?`).bind(await sha256(token)).first();
+  const sql="SELECT s.role,s.account_id,s.expires_at, CASE WHEN s.role='admin' THEN a.username ELSE c.username END username, CASE WHEN s.role='admin' THEN 'Administrator' ELSE c.company_name END display_name, CASE WHEN s.role='counter' THEN c.active ELSE 1 END active FROM sessions s LEFT JOIN admins a ON s.role='admin' AND a.id=s.account_id LEFT JOIN counters c ON s.role='counter' AND c.id=s.account_id WHERE s.token_hash=?";
+  const row=await db.prepare(sql).bind(await sha256(token)).first();
   if(!row||row.expires_at<Date.now()||!row.active)return null;
   return row;
 }
-export const isDate = s => { if(typeof s!=='string'||!/^\\d{4}-\\d{2}-\\d{2}$/.test(s)) return false; const d=new Date(s+'T00:00:00Z'); return !Number.isNaN(d.getTime()) && d.toISOString().slice(0,10)===s; };
+export const isDate = s => {
+  if(typeof s!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+  const d=new Date(s+'T00:00:00Z');
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0,10)===s;
+};
 export function seatDetails(id,prices){
-  if(/^S(?:[1-9]|[1-5]\\d|6[1-6])$/.test(id))return {category:'Ringside',price:prices.ringside};
+  if(/^S(?:[1-9]|[1-5]\d|6[1-6])$/.test(id))return {category:'Ringside',price:prices.ringside};
   if(/^[A-H](?:[1-9]|1[0-8])$/.test(id))return {category:'VIP Seat',price:prices.vip};
-  if(/^GT(?:[1-9]|[1-7]\\d|80)$/.test(id))return {category:'Grandstand',price:prices.grandstand};
+  if(/^GT(?:[1-9]|[1-7]\d|80)$/.test(id))return {category:'Grandstand',price:prices.grandstand};
   return null;
 }
 export async function getPrices(db){
