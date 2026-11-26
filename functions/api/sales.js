@@ -6,12 +6,13 @@ export async function onRequestGet({request,env}){
   const where=date?'AND s.event_date=?':'';
   if(s.role==='admin'){
     const binds=date?[date]:[];
-    const totals=await env.DB.prepare(`SELECT COALESCE(SUM(ticket_count),0) ticket_count,COALESCE(SUM(total_amount),0) revenue,COUNT(*) orders FROM sales s WHERE 1=1 ${where}`).bind(...binds).first();
-    const byCounter=await env.DB.prepare(`SELECT counter_id,counter_name,COUNT(*) orders,SUM(ticket_count) ticket_count,SUM(total_amount) revenue FROM sales s WHERE 1=1 ${where} GROUP BY counter_id,counter_name ORDER BY revenue DESC`).bind(...binds).all();
-    const recent=await env.DB.prepare(`SELECT s.*,GROUP_CONCAT(t.seat_id, ', ') seats FROM sales s LEFT JOIN tickets t ON t.sale_id=s.id WHERE 1=1 ${where} GROUP BY s.id ORDER BY s.created_at DESC LIMIT 150`).bind(...binds).all();
+    const totals=await env.DB.prepare("SELECT COALESCE(SUM(ticket_count),0) ticket_count,COALESCE(SUM(total_amount),0) revenue,COUNT(*) orders FROM sales s WHERE 1=1 "+where).bind(...binds).first();
+    const byCounter=await env.DB.prepare("SELECT counter_id,counter_name,COUNT(*) orders,SUM(ticket_count) ticket_count,SUM(total_amount) revenue FROM sales s WHERE 1=1 "+where+" GROUP BY counter_id,counter_name ORDER BY revenue DESC").bind(...binds).all();
+    const recent=await env.DB.prepare("SELECT s.*,GROUP_CONCAT(t.seat_id, ', ') seats FROM sales s LEFT JOIN tickets t ON t.sale_id=s.id WHERE 1=1 "+where+" GROUP BY s.id ORDER BY s.created_at DESC LIMIT 150").bind(...binds).all();
     return json({totals,byCounter:byCounter.results||[],recent:recent.results||[]});
   }
-  const counterDateFilter=date?' AND s.event_date=?':'';\n  const recent=await env.DB.prepare(`SELECT s.*,GROUP_CONCAT(t.seat_id, ', ') seats FROM sales s LEFT JOIN tickets t ON t.sale_id=s.id WHERE s.counter_id=?${counterDateFilter} GROUP BY s.id ORDER BY s.created_at DESC LIMIT 100`).bind(...(date?[s.account_id,date]:[s.account_id])).all();
+  const counterDateFilter=date?' AND s.event_date=?':'';
+  const recent=await env.DB.prepare("SELECT s.*,GROUP_CONCAT(t.seat_id, ', ') seats FROM sales s LEFT JOIN tickets t ON t.sale_id=s.id WHERE s.counter_id=?"+counterDateFilter+" GROUP BY s.id ORDER BY s.created_at DESC LIMIT 100").bind(...(date?[s.account_id,date]:[s.account_id])).all();
   return json({counter:s.display_name,recent:recent.results||[]});
 }
 export async function onRequestPost({request,env}){
@@ -22,6 +23,7 @@ export async function onRequestPost({request,env}){
   const items=p.seats.map(id=>({id,...(seatDetails(id,prices)||{})}));
   if(items.some(x=>!x.category||!Number.isSafeInteger(x.price)||x.price<0))return json({error:'Unknown seat or invalid ticket price'},400);
   const saleId=uid(),created=now(),counter=await env.DB.prepare('SELECT company_name FROM counters WHERE id=?').bind(s.account_id).first();
+  if(!counter)return json({error:'Counter account no longer exists'},401);
   const total=items.reduce((sum,x)=>sum+x.price,0);
   const stmts=[env.DB.prepare('INSERT INTO sales(id,counter_id,counter_name,event_date,customer_name,payment_method,ticket_count,total_amount,created_at) VALUES(?,?,?,?,?,?,?,?,?)').bind(saleId,s.account_id,counter.company_name,p.eventDate,p.customerName.trim()||null,p.paymentMethod,items.length,total,created)];
   for(const item of items)stmts.push(env.DB.prepare('INSERT INTO tickets(id,sale_id,event_date,seat_id,category,unit_price,created_at) VALUES(?,?,?,?,?,?,?)').bind(uid(),saleId,p.eventDate,item.id,item.category,item.price,created));
