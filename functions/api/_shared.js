@@ -35,7 +35,7 @@ export async function getSession(request,db){
   if(!row||row.expires_at<Date.now()||!row.active)return null;
   return row;
 }
-export const isDate = s => typeof s==='string' && /^\\d{4}-\\d{2}-\\d{2}$/.test(s) && !Number.isNaN(Date.parse(s+'T00:00:00Z'));
+export const isDate = s => { if(typeof s!=='string'||!/^\\d{4}-\\d{2}-\\d{2}$/.test(s)) return false; const d=new Date(s+'T00:00:00Z'); return !Number.isNaN(d.getTime()) && d.toISOString().slice(0,10)===s; };
 export function seatDetails(id,prices){
   if(/^S(?:[1-9]|[1-5]\\d|6[1-6])$/.test(id))return {category:'Ringside',price:prices.ringside};
   if(/^[A-H](?:[1-9]|1[0-8])$/.test(id))return {category:'VIP Seat',price:prices.vip};
