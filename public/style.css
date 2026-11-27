@@ -132,3 +132,24 @@ body.landing{background:#071613;color:#f4f1e8;font-family:'Prompt',sans-serif}
 .experience-section,.seat-section{padding:68px 20px}.experience-heading{display:block;margin-top:18px}.experience-heading h2,.seat-section h2{font-size:43px}.experience-heading p{font-size:12px;margin-top:18px}.feature-grid{grid-template-columns:1fr;gap:10px;margin-top:30px}.feature-grid article{min-height:190px;padding:20px}.feature-icon{margin:13px 0 3px}.seat-cards{grid-template-columns:1fr;gap:10px}.seat-card{min-height:205px;padding:20px}.seat-card:before{left:75%;top:8px}.seat-card:after{left:75%;top:58px}.closing-cta{padding:55px 20px;display:block}.closing-cta h2{font-size:58px}.closing-cta>a{display:inline-block;margin-top:28px}.landing-footer{padding:25px 18px;flex-wrap:wrap}.landing-footer p{order:3;width:100%;margin:0}}
 @media(prefers-reduced-motion:no-preference){.ring-stage{animation:ringFloat 7s ease-in-out infinite}.art-orbit{animation:orbitPulse 12s ease-in-out infinite alternate}@keyframes ringFloat{0%,100%{transform:perspective(700px) rotateX(57deg) rotateZ(-12deg) translateY(0)}50%{transform:perspective(700px) rotateX(57deg) rotateZ(-12deg) translateY(-9px)}}@keyframes orbitPulse{from{opacity:.35;transform:scale(.97)}to{opacity:.8;transform:scale(1.03)}}}
 
+
+/* Stadium photo supplied by the owner — full-bleed homepage background */
+.landing-hero{
+  display:block;
+  min-height:calc(100vh - 86px);
+  padding:clamp(64px,9vh,110px) 6.2% 76px;
+  background:
+    linear-gradient(90deg,rgba(4,12,14,.94) 0%,rgba(5,15,17,.78) 42%,rgba(5,15,17,.24) 100%),
+    linear-gradient(0deg,rgba(4,12,14,.72) 0%,transparent 38%,rgba(4,12,14,.16) 100%),
+    url('/stadium-background.jpg') center 54% / cover no-repeat;
+}
+.landing-hero .hero-copy{max-width:740px;padding:20px 0 85px}
+.landing-hero .hero-copy h1{ text-shadow:0 5px 28px #0009 }
+.landing-hero .hero-description{color:#e0e5df;text-shadow:0 2px 12px #000b}
+.landing-hero .hero-art{display:none}
+.landing-hero .hero-bottomline{left:6.2%;right:6.2%}
+@media(max-width:650px){
+ .landing-hero{min-height:calc(100svh - 112px);padding:54px 20px 75px;background-position:58% center}
+ .landing-hero .hero-copy{padding:0 0 72px}
+ .landing-hero .hero-bottomline{left:20px;right:20px}
+}
